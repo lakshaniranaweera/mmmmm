@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Tiles Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                #111 0%, #222 25%, #333 50%, #222 75%, #111 100%);
+            z-index: 0;
+        }
+        
+        #tiles-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .tile {
+            position: absolute;
+            background-color: #FFA500;
+            border: 2px solid white;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            animation: blink 0.5s infinite alternate;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 0.8; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+            100% { opacity: 1; box-shadow: 0 0 20px rgba(255,255,255,0.9); }
+        }
+        
+        .tile.short {
+            background-color: #FF6347; /* Tomato */
+            animation: blinkShort 0.3s infinite alternate;
+        }
+        
+        @keyframes blinkShort {
+            0% { opacity: 0.8; box-shadow: 0 0 5px rgba(255,99,71,0.5); }
+            100% { opacity: 1; box-shadow: 0 0 20px rgba(255,99,71,0.9); }
+        }
+        
+        .tile.long {
+            background-color: #1E90FF; /* DodgerBlue */
+            animation: blinkLong 0.7s infinite alternate;
+        }
+        
+        @keyframes blinkLong {
+            0% { opacity: 0.8; box-shadow: 0 0 5px rgba(30,144,255,0.5); }
+            100% { opacity: 1; box-shadow: 0 0 20px rgba(30,144,255,0.9); }
+        }
+        
+        .tile.fade-out {
+            animation: fadeOut 0.3s forwards, explode 0.5s forwards;
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; transform: scale(0.5); }
+        }
+        
+        @keyframes explode {
+            0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.7); }
+            100% { box-shadow: 0 0 50px 20px rgba(255,255,255,0); }
+        }
+        
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 50px;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+        
+        #hearts-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .heart {
+            width: 30px;
+            height: 30px;
+            background-color: red;
+            transform: rotate(45deg);
+            position: relative;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: rotate(45deg) scale(1); }
+            50% { transform: rotate(45deg) scale(1.1); }
+            100% { transform: rotate(45deg) scale(1); }
+        }
+        
+        .heart:before, .heart:after {
+            content: "";
+            width: 30px;
+            height: 30px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+        }
+        
+        .heart:before {
+            top: -15px;
+            left: 0;
+        }
+        
+        .heart:after {
+            top: 0;
+            left: -15px;
+        }
+        
+        #broken-heart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3);
+            z-index: 100;
+            display: none;
+            pointer-events: none;
+            animation: heartBreak 1s;
+        }
+        
+        @keyframes heartBreak {
+            0% { background-color: rgba(255, 0, 0, 0); }
+            50% { background-color: rgba(255, 0, 0, 0.7); }
+            100% { background-color: rgba(255, 0, 0, 0.3); }
+        }
+        
+        .crack {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 101;
+            animation: crackFade 1.5s forwards;
+        }
+        
+        @keyframes crackFade {
+            0% { opacity: 0; transform: scale(0.5); }
+            20% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+        }
+        
+        #game-over h1 {
+            font-size: 50px;
+            margin-bottom: 20px;
+            animation: gameOverText 2s infinite;
+        }
+        
+        @keyframes gameOverText {
+            0% { transform: scale(1); text-shadow: 0 0 10px red; }
+            50% { transform: scale(1.1); text-shadow: 0 0 20px red; }
+            100% { transform: scale(1); text-shadow: 0 0 10px red; }
+        }
+        
+        #final-score {
+            font-size: 30px;
+            margin-bottom: 30px;
+        }
+        
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #FFA500;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .grid-line {
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="background"></div>
+        <div id="grid-lines"></div>
+        <div id="tiles-container"></div>
+        <div id="score-display">0</div>
+        <div id="hearts-container"></div>
+        <div id="broken-heart-overlay"></div>
+        <div id="game-over">
+            <h1>Game Over</h1>
+            <div id="final-score">Score: 0</div>
+            <button id="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let heartCount = 3;
+        let gameOver = false;
+        let tileSpeed = 5;
+        let tileInterval = 800; // ms
+        let lastTileTime = 0;
+        let tiles = [];
+        let animationId;
+        let gameStartTime = 0;
+        
+        // DOM elements
+        const tilesContainer = document.getElementById('tiles-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const heartsContainer = document.getElementById('hearts-container');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const gridLines = document.getElementById('grid-lines');
+        const brokenHeartOverlay = document.getElementById('broken-heart-overlay');
+        
+        // Initialize game
+        function initGame() {
+            // Clear previous game state
+            tilesContainer.innerHTML = '';
+            heartsContainer.innerHTML = '';
+            brokenHeartOverlay.style.display = 'none';
+            
+            // Reset variables
+            score = 0;
+            heartCount = 3;
+            gameOver = false;
+            tileSpeed = 5;
+            tileInterval = 800;
+            scoreDisplay.textContent = '0';
+            gameOverScreen.style.display = 'none';
+            
+            // Create grid lines
+            createGridLines();
+            
+            // Create hearts
+            for (let i = 0; i < heartCount; i++) {
+                createHeart();
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Start game loop
+            gameStartTime = Date.now();
+            lastTileTime = gameStartTime;
+            gameLoop();
+        }
+        
+        // Create grid lines
+        function createGridLines() {
+            gridLines.innerHTML = '';
+            const tileWidth = window.innerWidth / 4;
+            for (let i = 1; i < 4; i++) {
+                const line = document.createElement('div');
+                line.className = 'grid-line';
+                line.style.left = `${i * tileWidth}px`;
+                gridLines.appendChild(line);
+            }
+        }
+        
+        // Create a heart
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heartsContainer.appendChild(heart);
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Remove old listeners if any
+            tilesContainer.removeEventListener('click', handleTileClick);
+            restartBtn.removeEventListener('click', initGame);
+            window.removeEventListener('resize', handleResize);
+            
+            // Add new listeners
+            tilesContainer.addEventListener('click', handleTileClick);
+            restartBtn.addEventListener('click', initGame);
+            window.addEventListener('resize', handleResize);
+        }
+        
+        // Handle window resize
+        function handleResize() {
+            createGridLines();
+        }
+        
+        // Handle tile click
+        function handleTileClick(e) {
+            if (gameOver) return;
+            
+            let tileClicked = false;
+            
+            // Check if clicked on a tile
+            for (let i = 0; i < tiles.length; i++) {
+                const tile = tiles[i];
+                if (e.target === tile.element && !tile.clicked) {
+                    tile.clicked = true;
+                    tile.element.classList.add('fade-out');
+                    
+                    // Add score based on tile type
+                    if (tile.element.classList.contains('short')) {
+                        score += 5;
+                    } else if (tile.element.classList.contains('long')) {
+                        score += 15;
+                    } else {
+                        score += 10; // default
+                    }
+                    
+                    scoreDisplay.textContent = score;
+                    tileClicked = true;
+                    
+                    // Increase difficulty
+                    tileSpeed = 5 + Math.floor(score / 20);
+                    tileInterval = Math.max(300, 800 - score * 5);
+                    
+                    // Remove tile after animation
+                    setTimeout(() => {
+                        tilesContainer.removeChild(tile.element);
+                        tiles.splice(i, 1);
+                    }, 300);
+                    break;
+                }
+            }
+            
+            // If clicked outside tiles
+            if (!tileClicked && e.target === tilesContainer) {
+                loseHeart();
+            }
+        }
+        
+        // Create new tiles (vertical)
+        function createTiles() {
+            const tileWidth = window.innerWidth / 4;
+            const tileHeight = 150;
+            const positions = [0, 1, 2, 3];
+            const tileCount = Math.random() > 0.7 ? 2 : 1; // 70% chance for 1 tile, 30% for 2
+            
+            // Select random positions
+            const selectedPositions = [];
+            while (selectedPositions.length < tileCount) {
+                const randomIndex = Math.floor(Math.random() * positions.length);
+                const pos = positions[randomIndex];
+                if (!selectedPositions.includes(pos)) {
+                    selectedPositions.push(pos);
+                }
+            }
+            
+            // Create tiles
+            for (const pos of selectedPositions) {
+                const isShort = Math.random() > 0.5;
+                const isLong = !isShort && Math.random() > 0.7;
+                
+                const tile = {
+                    element: document.createElement('div'),
+                    x: pos * tileWidth,
+                    y: -tileHeight,
+                    width: tileWidth,
+                    height: isLong ? tileHeight * 1.5 : tileHeight,
+                    clicked: false
+                };
+                
+                tile.element.className = 'tile';
+                if (isShort) tile.element.classList.add('short');
+                if (isLong) tile.element.classList.add('long');
+                
+                tile.element.style.width = `${tile.width}px`;
+                tile.element.style.height = `${tile.height}px`;
+                tile.element.style.left = `${tile.x}px`;
+                tile.element.style.top = `${tile.y}px`;
+                
+                // Display score value
+                if (isShort) {
+                    tile.element.textContent = '+5';
+                } else if (isLong) {
+                    tile.element.textContent = '+15';
+                } else {
+                    tile.element.textContent = '+10';
+                }
+                
+                tilesContainer.appendChild(tile.element);
+                tiles.push(tile);
+            }
+        }
+        
+        // Update tiles position (vertical movement)
+        function updateTiles() {
+            const now = Date.now();
+            
+            // Create new tiles
+            if (now - lastTileTime > tileInterval && !gameOver) {
+                createTiles();
+                lastTileTime = now;
+            }
+            
+            // Move tiles and check for misses
+            for (let i = 0; i < tiles.length; i++) {
+                const tile = tiles[i];
+                tile.y += tileSpeed;
+                tile.element.style.top = `${tile.y}px`;
+                
+                // Check if tile passed the bottom without being clicked
+                if (tile.y > window.innerHeight && !tile.clicked) {
+                    loseHeart();
+                    tilesContainer.removeChild(tile.element);
+                    tiles.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        
+        // Lose a heart with dramatic effect
+        function loseHeart() {
+            if (gameOver) return;
+            
+            heartCount--;
+            
+            // Update hearts display
+            if (heartsContainer.children.length > 0) {
+                heartsContainer.removeChild(heartsContainer.lastChild);
+            }
+            
+            // Show broken heart effect
+            showBrokenHeartEffect();
+            
+            // Check for game over
+            if (heartCount <= 0) {
+                gameOver = true;
+                setTimeout(redirectToScorePage, 1000); // Changed from showGameOver to redirect
+            }
+        }
+        
+        // Show dramatic broken heart effect
+        function showBrokenHeartEffect() {
+            // Show red overlay
+            brokenHeartOverlay.style.display = 'block';
+            setTimeout(() => {
+                brokenHeartOverlay.style.display = 'none';
+            }, 1000);
+            
+            // Create crack effects
+            for (let i = 0; i < 8; i++) {
+                createCrack();
+            }
+        }
+        
+        // Create crack animation
+        function createCrack() {
+            const crack = document.createElement('div');
+            crack.className = 'crack';
+            
+            // Random position and size
+            const width = Math.random() * 200 + 50;
+            const height = 2;
+            const left = Math.random() * window.innerWidth;
+            const top = Math.random() * window.innerHeight;
+            const angle = Math.random() * 360;
+            
+            crack.style.width = `${width}px`;
+            crack.style.height = `${height}px`;
+            crack.style.left = `${left}px`;
+            crack.style.top = `${top}px`;
+            crack.style.transform = `rotate(${angle}deg)`;
+            
+            document.body.appendChild(crack);
+            
+            // Remove after animation
+            setTimeout(() => {
+                document.body.removeChild(crack);
+            }, 1500);
+        }
+        
+        // Redirect to score page with the final score
+        function redirectToScorePage() {
+            window.location.href = `score.html?score=${score}`;
+        }
+        
+        // Show game over screen (not used anymore, replaced by redirect)
+        function showGameOver() {
+            cancelAnimationFrame(animationId);
+            gameOverScreen.style.display = 'flex';
+            finalScoreDisplay.textContent = `Score: ${score}`;
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            if (!gameOver) {
+                updateTiles();
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>

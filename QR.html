@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Reward | Hutch Reward Rush</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #000;
+        }
+        
+        .qr-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+        }
+        
+        /* Background Layers */
+        .bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -5;
+        }
+        
+        .static-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                url('star.jpg') center/cover no-repeat,
+                linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.7));
+            opacity: 0.7;
+            z-index: 1;
+        }
+        
+        .black-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2;
+        }
+        
+        .nebula-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 100, 0, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 140, 0, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 40% 60%, rgba(255, 69, 0, 0.1) 0%, transparent 40%);
+            animation: nebulaPulse 20s infinite alternate;
+            z-index: 3;
+        }
+        
+        .starfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+        
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 140, 0, 0.6);
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: float linear infinite;
+        }
+        
+        /* QR Display */
+        .qr-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #FFA500;
+            text-shadow: 0 0 20px rgba(255, 165, 0, 0.8);
+            animation: glow 2s infinite alternate;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .qr-code-container {
+            padding: 1.5rem;
+            background: white;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
+            z-index: 10;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .qr-code-img {
+            width: 250px;
+            height: 250px;
+        }
+        
+        .redirect-message {
+            font-size: 1.5rem;
+            color: white;
+            z-index: 10;
+            animation: fadeIn 2s ease-out;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+        }
+        
+        /* Animations */
+        @keyframes nebulaPulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+        
+        @keyframes twinkle {
+            0% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.2; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(255, 165, 0, 0.8); }
+            to { text-shadow: 0 0 30px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255, 165, 0, 0.6); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes particle-float {
+            to { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .qr-title { font-size: 2rem; }
+            .qr-code-container { padding: 1rem; }
+            .qr-code-img { width: 200px; height: 200px; }
+            .redirect-message { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-container">
+        <!-- Background Layers -->
+        <div class="bg-container">
+            <div class="static-bg"></div>
+            <div class="black-overlay"></div>
+        </div>
+        
+        <div class="nebula-bg"></div>
+        <div class="starfield" id="starfield"></div>
+        <div class="particles" id="particles"></div>
+        
+        <!-- Content -->
+        <h1 class="qr-title">Scan to Claim Your Reward</h1>
+        <div class="qr-code-container">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://www.hutch.lk" 
+                 alt="QR Code" class="qr-code-img">
+        </div>
+        <div class="redirect-message" id="countdown">You will be redirected in 7 seconds...</div>
+    </div>
+
+    <script>
+        // Create starfield
+        function createStarfield() {
+            const starfield = document.getElementById('starfield');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 2;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const duration = 2 + Math.random() * 3;
+                const delay = Math.random() * 5;
+                
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${posX}%`;
+                star.style.top = `${posY}%`;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${delay}s`;
+                star.style.setProperty('--duration', `${duration}s`);
+                
+                if (Math.random() > 0.7) {
+                    star.style.background = `rgba(255, ${100 + Math.random() * 100}, 0, 0.8)`;
+                }
+                
+                starfield.appendChild(star);
+            }
+        }
+        
+        // Create golden particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 15 + 5;
+                const posX = Math.random() * 100;
+                const delay = Math.random() * 3;
+                const duration = Math.random() * 3 + 2;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}vw`;
+                particle.style.bottom = '0';
+                particle.style.opacity = '0.8';
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                const hue = 25 + Math.random() * 20;
+                particle.style.backgroundColor = `hsla(${hue}, 100%, 60%, 0.8)`;
+                
+                particlesContainer.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), (delay + duration) * 1000);
+            }
+        }
+        
+        // Countdown to redirect
+        function startCountdown() {
+            let seconds = 15;
+            const countdownDisplay = document.getElementById('countdown');
+            const timer = setInterval(() => {
+                countdownDisplay.textContent = `You will be redirected in ${seconds} seconds...`;
+                seconds--;
+                
+                if (seconds < 0) {
+                    clearInterval(timer);
+                    window.location.href = 'index.html';
+                }
+            }, 1000);
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            // Verify background image
+            const bg = document.querySelector('.static-bg');
+            const testImage = new Image();
+            testImage.src = 'star.jpg';
+            testImage.onerror = () => {
+                bg.style.background = 'linear-gradient(to bottom, #000000, #1a1a1a)';
+            };
+            
+            createStarfield();
+            createParticles();
+            startCountdown();
+            
+            // Continuous particle creation
+            setInterval(createParticles, 2000);
+        });
+    </script>
+</body>
+</html>
